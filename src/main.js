@@ -268,6 +268,30 @@
         const { type, payload } = e.data;
         if (type === "compiled") {
           writeOutput(`// Compiled JS:\n${payload.code}\n\nRunning...\n`, "success");
+          const browserRequire = (name) => {
+            if (name === "fs") {
+              return {
+                promises: {
+                  readFile: async () => {
+                    throw new Error("file.baca belum tersedia di Acode browser runtime.");
+                  },
+                  writeFile: async () => {
+                    throw new Error("file.tulis belum tersedia di Acode browser runtime.");
+                  }
+                },
+                existsSync: () => false
+              };
+            }
+            if (name === "readline-sync") {
+              return { question: (message) => prompt(message || "") || "" };
+            }
+            throw new Error(`Module '${name}' tidak tersedia di Acode browser runtime.`);
+          };
+          const browserProcess = {
+            stdout: {
+              write: (value) => console.log(String(value))
+            }
+          };
           try {
             const originalLog = console.log;
             const logs = [];
@@ -275,8 +299,11 @@
               logs.push(args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
               originalLog.apply(console, args);
             };
-            new Function(payload.code)();
-            console.log = originalLog;
+            try {
+              new Function("require", "process", "fetch", payload.code)(browserRequire, browserProcess, window.fetch?.bind(window));
+            } finally {
+              console.log = originalLog;
+            }
             if (logs.length > 0) {
               writeOutput(logs.join("\n"), "success");
             } else {

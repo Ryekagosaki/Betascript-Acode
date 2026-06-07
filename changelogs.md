@@ -1,5 +1,11 @@
 # Changelogs
 
+## 1.1.1
+
+- Added bundled BetaScript compiler for the Acode worker.
+- Fixed worker message payloads so the Run button can receive compiled JavaScript.
+- Added browser runtime shims for `require("fs")`, `readline-sync`, and `process.stdout`.
+
 ## 1.1.0
 
 - Added official manifest fields: `readme`, `files`, `changelogs`, and root `icon.png`.

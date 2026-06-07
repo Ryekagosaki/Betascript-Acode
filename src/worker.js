@@ -1,24 +1,11 @@
-importScripts('lib/Lexer.js');
-importScripts('lib/Token.js');
-importScripts('lib/Position.js');
-importScripts('lib/BetaError.js');
-importScripts('lib/Parser.js');
-importScripts('lib/AST.js');
-importScripts('lib/JavaScriptEmitter.js');
-importScripts('lib/SemanticAnalyzer.js');
+importScripts('compiler.bundle.js');
 
 function compile(source) {
-  const lexer = new Lexer(source);
-  const tokens = lexer.tokenize();
+  if (!self.BetaScriptCompiler || typeof self.BetaScriptCompiler.compile !== 'function') {
+    throw new Error('Compiler BetaScript belum bisa dimuat.');
+  }
 
-  const parser = new Parser(source);
-  const ast = parser.parse(tokens);
-
-  const analyzer = new SemanticAnalyzer();
-  analyzer.analyze(ast);
-
-  const emitter = new JavaScriptEmitter();
-  const code = emitter.emit(ast);
+  const code = self.BetaScriptCompiler.compile(source);
 
   return { ok: true, code };
 }
@@ -43,10 +30,10 @@ self.addEventListener('message', (event) => {
   if (type === 'compile') {
     try {
       const result = compile(source);
-      self.postMessage({ type: 'compiled', code: result.code });
+      self.postMessage({ type: 'compiled', payload: { code: result.code } });
     } catch (err) {
       const message = err.message ? err.message.replace(/\[.*?\]\s*$/g, '').trim() : 'Unknown error';
-      self.postMessage({ type: 'error', message });
+      self.postMessage({ type: 'error', payload: { message } });
     }
   } else if (type === 'run') {
     try {
