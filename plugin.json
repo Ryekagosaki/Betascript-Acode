@@ -4,7 +4,7 @@
   "name": "betascript-acode",
   "displayName": "BetaScript Language Support",
   "description": "Syntax highlighting, transpilation, and execution for BetaScript in Acode",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": {
     "name": "BetaScript Project",
     "github": "Ryekagosaki"
@@ -13,7 +13,20 @@
   "repository": "https://github.com/Ryekagosaki/Betascript-Acode",
   "keywords": ["betascript", "betawi", "programming-language", "syntax-highlighting"],
   "main": "src/main.js",
-  "icon": "icons/betascript.png",
+  "readme": "readme.md",
+  "icon": "icon.png",
+  "files": [
+    "src/main.js",
+    "src/worker.js",
+    "icons/betascript.png",
+    "icons/betascript.svg",
+    "icon.png",
+    "readme.md",
+    "changelogs.md",
+    "syntaxes/beta.tmLanguage.json",
+    "acode-plugin-source.json"
+  ],
+  "changelogs": "changelogs.md",
   "price": 0,
   "minVersionCode": 290,
   "acode": {

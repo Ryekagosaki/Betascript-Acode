@@ -1,9 +1,14 @@
 (function () {
+  const PLUGIN_ID = "acode.betascript";
   const PLUGIN_NAME = "betascript-acode";
   let editor = null;
   let worker = null;
   let runButton = null;
   let outputPanel = null;
+  let pluginBaseUrl = "";
+  let editorManagerHooked = false;
+  let iconRefreshTimer = null;
+  let initialized = false;
 
   const CSS_ID = "betascript-plugin-style";
   const RUN_BUTTON_ID = "betascript-run-btn";
@@ -82,8 +87,32 @@
         background-repeat: no-repeat;
         background-position: center;
       }
+      .file_type_beta,
+      .file_type_betascript,
+      .betascript-tab-icon {
+        background-image: url("${BETA_ICON}") !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+      }
+      .file_type_beta::before,
+      .file_type_betascript::before,
+      .betascript-tab-icon::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 18px !important;
+        height: 18px !important;
+        background-image: url("${BETA_ICON}") !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  function isBetaPath(value) {
+    return typeof value === "string" && /(^|[\\/\s])[^\\/\s]+\.beta($|[?#\s])/i.test(value);
   }
 
   function elementLooksLikeBetaFile(element) {
@@ -93,11 +122,11 @@
     const attrs = ["title", "data-path", "data-file", "data-name", "aria-label"];
     for (const attr of attrs) {
       const value = element.getAttribute && element.getAttribute(attr);
-      if (value && /(^|[\\/\s])[^\\/\s]+\.beta($|\s)/i.test(value)) return true;
+      if (isBetaPath(value)) return true;
     }
 
     const text = (element.textContent || "").trim();
-    return text.length > 0 && text.length < 120 && /(^|[\\/\s])[^\\/\s]+\.beta($|\s)/i.test(text);
+    return text.length > 0 && text.length < 120 && isBetaPath(text);
   }
 
   function addBetaIcon(element) {
@@ -123,6 +152,11 @@
       "li",
       ".file",
       ".file-item",
+      ".file_type_default",
+      ".file_type_beta",
+      ".file_type_betascript",
+      ".open-file",
+      ".tab",
       ".list-item",
       ".tree-item",
       ".item"
@@ -150,6 +184,49 @@
     });
 
     fileIconObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function decorateActiveFileIcon(file) {
+    const manager = (typeof editorManager !== "undefined" ? editorManager : null) || window.editorManager;
+    const activeFile = file || manager?.activeFile;
+    if (!activeFile) return;
+
+    const nameParts = [activeFile.filename, activeFile.name, activeFile.uri, activeFile.location, activeFile.id].filter(Boolean);
+    if (!nameParts.some(isBetaPath)) return;
+
+    try { activeFile.tabIcon = "file file_type_beta betascript-tab-icon"; } catch (_) {}
+    try { activeFile.icon = "file file_type_beta betascript-tab-icon"; } catch (_) {}
+
+    const tab = activeFile.tab || activeFile.$tab || activeFile.tabEl || null;
+    if (tab && tab.classList) {
+      tab.classList.add("betascript-beta-tab");
+      const icon = tab.querySelector?.(".file, .icon, i, span") || tab;
+      icon.classList?.add("file_type_beta", "betascript-tab-icon");
+    }
+  }
+
+  function startEditorIconHook() {
+    decorateActiveFileIcon();
+    const manager = (typeof editorManager !== "undefined" ? editorManager : null) || window.editorManager;
+    if (manager && typeof manager.on === "function" && !editorManagerHooked) {
+      editorManagerHooked = true;
+      manager.on("switch-file", decorateActiveFileIcon);
+      manager.on("file-loaded", decorateActiveFileIcon);
+      manager.on("rename-file", decorateActiveFileIcon);
+      manager.on("update", () => decorateActiveFileIcon());
+    }
+    if (!iconRefreshTimer) {
+      iconRefreshTimer = setInterval(() => {
+        decorateBetaFileIcons();
+        decorateActiveFileIcon();
+      }, 1500);
+      setTimeout(() => {
+        if (iconRefreshTimer) {
+          clearInterval(iconRefreshTimer);
+          iconRefreshTimer = null;
+        }
+      }, 15000);
+    }
   }
 
   function createRunButton() {
@@ -186,7 +263,7 @@
   function initWorker() {
     if (worker) return;
     try {
-      worker = new Worker("src/worker.js");
+      worker = new Worker(`${pluginBaseUrl}src/worker.js`);
       worker.onmessage = (e) => {
         const { type, payload } = e.data;
         if (type === "compiled") {
@@ -239,6 +316,10 @@
 
   function runCode(source) {
     if (!worker) initWorker();
+    if (!worker) {
+      writeOutput("Worker BetaScript belum bisa dimuat. Icon dan language support tetap aktif.", "error");
+      return;
+    }
     showOutputPanel();
     writeOutput("Compiling...", "success");
     worker.postMessage({ type: "compile", source });
@@ -275,15 +356,18 @@
     name: PLUGIN_NAME,
     background: false,
     init: function () {
+      if (initialized) return;
+      initialized = true;
       injectStyles();
       createRunButton();
       createOutputPanel();
-      initWorker();
       startFileIconObserver();
+      startEditorIconHook();
     },
     onFileSelected: function () {
       runButton.style.display = "block";
       decorateBetaFileIcons();
+      decorateActiveFileIcon();
     },
     onEditorChanged: function (e) {
       if (e && e.editor && e.editor.getText) {
@@ -305,14 +389,27 @@
         fileIconObserver.disconnect();
         fileIconObserver = null;
       }
+      if (iconRefreshTimer) {
+        clearInterval(iconRefreshTimer);
+        iconRefreshTimer = null;
+      }
       document.querySelectorAll(`.${FILE_ICON_CLASS}`).forEach((icon) => icon.remove());
       outputPanel = null;
       worker = null;
       runButton = null;
+      initialized = false;
     }
   };
 
-  if (typeof acode !== "undefined" && acode && typeof acode.ready === "function") {
+  if (typeof acode !== "undefined" && acode && typeof acode.setPluginInit === "function") {
+    acode.setPluginInit(PLUGIN_ID, async (baseUrl) => {
+      pluginBaseUrl = baseUrl && !baseUrl.endsWith("/") ? `${baseUrl}/` : (baseUrl || "");
+      plugin.init();
+    });
+    if (typeof acode.setPluginUnmount === "function") {
+      acode.setPluginUnmount(PLUGIN_ID, () => plugin.onClose());
+    }
+  } else if (typeof acode !== "undefined" && acode && typeof acode.ready === "function") {
     const ready = acode.ready();
     if (typeof ready === "function") ready(plugin);
   } else {

@@ -1,6 +1,6 @@
 # BetaScript Acode Plugin
 
-Plugin Acode untuk BetaScript. Plugin ini menambahkan dukungan file `.beta`, icon BetaScript di file explorer Acode, dan tombol run sederhana.
+Plugin Acode untuk BetaScript. Plugin ini menambahkan dukungan file `.beta`, icon BetaScript di file explorer/tab Acode, dan tombol run sederhana.
 
 ## Plugin Source URL
 
@@ -21,7 +21,9 @@ https://raw.githubusercontent.com/Ryekagosaki/Betascript-Acode/main/acode-plugin
 7. Restart Acode.
 8. Buat file `test.beta`.
 
-Setelah plugin aktif, file `.beta` akan dikenali sebagai BetaScript dan logo BetaScript akan muncul di file explorer.
+Setelah plugin aktif, file `.beta` akan dikenali sebagai BetaScript dan logo BetaScript akan muncul di file explorer atau tab Acode.
+
+Kalau icon belum muncul, restart Acode, tutup-buka ulang folder project, lalu pastikan file benar-benar bernama `nama_file.beta`.
 
 ## ZIP Manual
 
