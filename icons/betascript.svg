@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B35"/>
+      <stop offset="100%" style="stop-color:#F7931E"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" x="4" y="4" rx="20" ry="20" fill="url(#bg)"/>
+  <text x="64" y="88" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">β</text>
+  <polygon points="100,15 103,25 113,25 105,31 108,41 100,35 92,41 95,31 87,25 97,25" fill="#FFD700"/>
+</svg>

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "acode.betascript",
+    "name": "BetaScript",
+    "icon": "https://raw.githubusercontent.com/Ryekagosaki/Betascript-Acode/main/icons/betascript.png",
+    "plugin": "https://raw.githubusercontent.com/Ryekagosaki/Betascript-Acode/main/plugin.json",
+    "author": {
+      "name": "BetaScript Project",
+      "github": "Ryekagosaki"
+    }
+  }
+]
